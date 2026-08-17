@@ -5,12 +5,16 @@ using UnityEngine;
 
 namespace BoxroomMultiRoom
 {
+    /// <summary>
+    /// Immediate-mode room picker shown during link creation. IMGUI is used because
+    /// a MelonLoader mod can draw it without shipping or injecting a Unity prefab.
+    /// </summary>
     internal static class LinkMenu
     {
         private const float ReferenceWidth = 1920f;
         private const float ReferenceHeight = 1080f;
 
-        // Colours sampled from BOXROOM's own SelectableColorSet assets and save-slot prefab.
+        // Match BOXROOM's SelectableColorSet assets and save-slot UI.
         private static readonly Color Ink = new Color(0.1255f, 0.2392f, 0.2510f, 1f);
         private static readonly Color DeepBlue = new Color(0.1294f, 0.3020f, 0.3529f, 1f);
         private static readonly Color Blue = new Color(0.2353f, 0.4627f, 0.4863f, 1f);
@@ -38,6 +42,10 @@ namespace BoxroomMultiRoom
 
         public static bool CreateTwoWayLink { get; private set; } = true;
 
+        /// <summary>
+        /// Starts the two-step link workflow and releases the mouse from BOXROOM's
+        /// first-person controller while the overlay is visible.
+        /// </summary>
         public static void OpenForSource(DoorEndpoint source)
         {
             PendingDoorLink.SetSource(source);
@@ -51,12 +59,17 @@ namespace BoxroomMultiRoom
             Cursor.visible = true;
         }
 
+        /// <summary>Displays transient feedback without opening the full picker.</summary>
         public static void ShowMessage(string text)
         {
             message = text;
             messageUntil = Time.realtimeSinceStartup + 4f;
         }
 
+        /// <summary>
+        /// Draws in a fixed 1920x1080 reference space, then scales and centers that
+        /// space to preserve the layout at other aspect ratios and resolutions.
+        /// </summary>
         public static void Draw()
         {
             EnsureStyles();
@@ -81,6 +94,7 @@ namespace BoxroomMultiRoom
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>Draws and handles the modal room-selection screen.</summary>
         private static void DrawMenu()
         {
             DoorEndpoint source = PendingDoorLink.Source;
@@ -98,7 +112,7 @@ namespace BoxroomMultiRoom
                 return;
             }
 
-            // The real pause/load UI fills the screen with a muted patterned layer.
+            // Save the global IMGUI colour because other mods draw in the same event.
             GUI.color = new Color(0.035f, 0.075f, 0.08f, 0.88f);
             GUI.DrawTexture(new Rect(0f, 0f, ReferenceWidth, ReferenceHeight),
                 backgroundTexture != null ? backgroundTexture : whiteTexture, ScaleMode.StretchToFill);
@@ -168,6 +182,7 @@ namespace BoxroomMultiRoom
                     RestoreCursor();
                     ShowMessage("Room loaded — Shift-click the destination door");
                     Core.LoadSlot(slot);
+                    // ExitGUI aborts the current layout event before the scene reload.
                     GUIUtility.ExitGUI();
                 }
             }
@@ -205,6 +220,10 @@ namespace BoxroomMultiRoom
             Cursor.visible = oldCursorVisible;
         }
 
+        /// <summary>
+        /// Lazily creates reusable GUI resources. Unity's GUI skin is unavailable
+        /// during static initialization, so styles must be built from OnGUI.
+        /// </summary>
         private static void EnsureStyles()
         {
             if (whiteTexture == null)
@@ -217,6 +236,7 @@ namespace BoxroomMultiRoom
 
             if (backgroundTexture == null)
             {
+                // Reuse BOXROOM's loaded pattern instead of reading game files directly.
                 Texture2D[] textures = Resources.FindObjectsOfTypeAll<Texture2D>();
                 foreach (Texture2D texture in textures)
                 {
@@ -268,6 +288,10 @@ namespace BoxroomMultiRoom
             SetStyleState(cancelButtonStyle.focused, Paper, Red);
         }
 
+        /// <summary>
+        /// Prefer BOXROOM's loaded display font and fall back to the active GUI skin
+        /// when a game update renames or removes that resource.
+        /// </summary>
         private static Font FindBoxroomFont()
         {
             Font[] fonts = Resources.FindObjectsOfTypeAll<Font>();
@@ -296,8 +320,7 @@ namespace BoxroomMultiRoom
         {
             state.background = whiteTexture;
             state.textColor = text;
-            // GUIStyle cannot tint individual state textures, so the native palette is
-            // applied through a generated per-colour texture.
+            // Each state needs a pre-tinted texture; GUI.color cannot tint them separately.
             Texture2D texture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             texture.name = "BoxroomMultiRoom_Style";
             texture.SetPixel(0, 0, background);

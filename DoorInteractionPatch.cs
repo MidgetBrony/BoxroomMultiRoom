@@ -5,11 +5,20 @@ using UnityEngine;
 
 namespace BoxroomMultiRoom
 {
+    /// <summary>
+    /// Harmony prefix for BOXROOM's door interaction. Returning true lets the
+    /// original game method run; returning false replaces that interaction.
+    /// </summary>
     [HarmonyPatch(typeof(Interactable_door), nameof(Interactable_door.OnInteract))]
     internal static class DoorInteractionPatch
     {
+        /// <summary>
+        /// Routes Shift-clicks into link creation and ordinary clicks into linked
+        /// travel. Doors that MultiRoom cannot resolve remain entirely game-owned.
+        /// </summary>
         private static bool Prefix(Interactable_door __instance)
         {
+            // Harmony injects the Interactable_door instance through __instance.
             if (!DoorRuntime.TryResolve(__instance, out DoorEndpoint currentDoor))
             {
                 return true;
@@ -25,6 +34,7 @@ namespace BoxroomMultiRoom
                 return false;
             }
 
+            // Returning true is important: unlinked doors retain vanilla behavior.
             if (!DoorLinkManager.TryGetTarget(currentDoor, out DoorEndpoint target))
             {
                 return true;
@@ -36,10 +46,14 @@ namespace BoxroomMultiRoom
             PendingTeleport.Set(target);
             Core.LoadSlot(target.Slot);
 
-            // Suppress the ordinary swing because the scene is transitioning.
+            // Do not animate a door that is about to be unloaded.
             return false;
         }
 
+        /// <summary>
+        /// Implements a two-step interaction across scene loads: first remember the
+        /// source door, then accept the destination door after its room is loaded.
+        /// </summary>
         private static void HandleShiftClick(DoorEndpoint clickedDoor)
         {
             if (!PendingDoorLink.HasSource)

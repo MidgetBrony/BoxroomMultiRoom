@@ -8,6 +8,10 @@ using UnityEngine;
 
 namespace BoxroomMultiRoom
 {
+    /// <summary>
+    /// Repository for the JSON link file. Keeping persistence behind this class
+    /// prevents Harmony and UI code from depending on the on-disk format.
+    /// </summary>
     internal static class DoorLinkManager
     {
         private static DoorLinkFile data = new DoorLinkFile();
@@ -16,6 +20,10 @@ namespace BoxroomMultiRoom
 
         public static IReadOnlyList<DoorLink> Links => data.Links;
 
+        /// <summary>
+        /// Places mod data beside BOXROOM's save data using Unity's portable
+        /// persistentDataPath rather than assuming a Steam installation path.
+        /// </summary>
         public static void Initialize()
         {
             string savesDirectory =
@@ -26,6 +34,10 @@ namespace BoxroomMultiRoom
             Load();
         }
 
+        /// <summary>
+        /// Reads the link file. A missing or invalid file produces an empty in-memory
+        /// model so corrupt optional mod data does not prevent BOXROOM from starting.
+        /// </summary>
         public static void Load()
         {
             try
@@ -53,6 +65,9 @@ namespace BoxroomMultiRoom
             }
         }
 
+        /// <summary>
+        /// Writes indented JSON for easy backup, inspection, and manual recovery.
+        /// </summary>
         public static void Save()
         {
             try
@@ -73,6 +88,10 @@ namespace BoxroomMultiRoom
             }
         }
 
+        /// <summary>
+        /// Resolves outbound travel. Two-way links may also be traversed from their
+        /// target, but one-way links match their source only.
+        /// </summary>
         public static bool TryGetTarget(
             DoorEndpoint source,
             out DoorEndpoint target)
@@ -103,6 +122,10 @@ namespace BoxroomMultiRoom
             return false;
         }
 
+        /// <summary>
+        /// Gives a source door one unambiguous destination. For a two-way pair, the
+        /// target cannot simultaneously remain the source of an older link.
+        /// </summary>
         public static void AddOrReplace(
             DoorEndpoint source,
             DoorEndpoint target,
@@ -136,6 +159,10 @@ namespace BoxroomMultiRoom
                 (twoWay ? " (two-way)." : "."));
         }
 
+        /// <summary>
+        /// Removes every link involving an endpoint, regardless of direction.
+        /// This is ready for a future in-game link-management screen.
+        /// </summary>
         public static bool RemoveLink(DoorEndpoint endpoint)
         {
             int removed = data.Links.RemoveAll(link =>
@@ -151,6 +178,10 @@ namespace BoxroomMultiRoom
             return false;
         }
 
+        /// <summary>
+        /// Door identity is structural: room slot, grid coordinate, and wall facing.
+        /// Runtime GameObjects cannot be serialized safely across scene loads.
+        /// </summary>
         private static bool SameDoor(DoorEndpoint a, DoorEndpoint b)
         {
             return a.Slot == b.Slot &&

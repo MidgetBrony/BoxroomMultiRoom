@@ -5,8 +5,17 @@ using UnityEngine;
 
 namespace BoxroomMultiRoom
 {
+    /// <summary>
+    /// Adapts BOXROOM's live room objects to MultiRoom's serializable door model and
+    /// converts saved endpoints back into safe player transforms.
+    /// </summary>
     internal static class DoorRuntime
     {
+        /// <summary>
+        /// Finds the Door record that owns an interacted component. BOXROOM stores
+        /// doors as edge objects on room blocks, so component identity must be mapped
+        /// back to a slot, tile coordinate, and facing before it can be persisted.
+        /// </summary>
         public static bool TryResolve(
             Interactable_door interactable,
             out DoorEndpoint endpoint)
@@ -30,6 +39,7 @@ namespace BoxroomMultiRoom
                 if (!room.TryGetBlock(door.Position, out RoomBlock block))
                     continue;
 
+                // Facing is the index into BOXROOM's four edge-object slots.
                 GameObject edgeObject = block.EdgeObjects[(int)door.Facing];
                 if (edgeObject == null)
                     continue;
@@ -52,6 +62,10 @@ namespace BoxroomMultiRoom
             return false;
         }
 
+        /// <summary>
+        /// Computes a point just inside the destination door. Stale endpoints fall
+        /// back to BOXROOM's own valid reset position instead of stranding the player.
+        /// </summary>
         public static Vector3 GetSpawnPosition(
             RoomDataManager room,
             DoorEndpoint endpoint)
@@ -61,26 +75,26 @@ namespace BoxroomMultiRoom
 
             Vector2Int tile = new Vector2Int(endpoint.X, endpoint.Y);
 
-            // The saved Door.Position points at the tile owning the real door prefab.
-            // Start from the tile center and move slightly away from the edge.
+            // Spawn inside the owning tile, slightly away from the door edge.
             Vector2Int facingDirection =
                 GridUtility.FacingToDirection(endpoint.Facing);
 
             Vector3 candidate = new Vector3(tile.x, 1.1f, tile.y) -
                                 new Vector3(facingDirection.x, 0f, facingDirection.y) * 0.65f;
 
-            // If that tile disappeared, use the game's own safe-reset fallback.
+            // A moved or deleted door may leave a stale endpoint.
             if (!room.InBounds(tile) || room.GetRoomID(tile) == 0)
                 return room.FindValidPlayerResetPosition();
 
             return candidate;
         }
 
+        /// <summary>Returns a yaw that faces away from the wall and into the room.</summary>
         public static float GetArrivalYaw(Facing facing)
         {
             Vector2Int direction = GridUtility.FacingToDirection(facing);
 
-            // Look away from the door after arriving.
+            // Face into the destination room.
             Vector3 forward = new Vector3(-direction.x, 0f, -direction.y);
             if (forward.sqrMagnitude < 0.01f)
                 return 0f;

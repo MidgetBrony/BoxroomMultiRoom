@@ -10,24 +10,38 @@ using UnityEngine.SceneManagement;
 
 namespace BoxroomMultiRoom
 {
+    /// <summary>
+    /// MelonLoader entry point. It owns the mod lifecycle, draws the IMGUI overlay,
+    /// and performs save-slot transitions requested by linked doors.
+    /// </summary>
     public class Core : MelonMod
     {
         internal static Core Instance { get; private set; }
 
+        /// <summary>
+        /// Loads persisted links once MelonLoader has initialized the mod.
+        /// </summary>
         public override void OnInitializeMelon()
         {
-
             Instance = this;
             DoorLinkManager.Initialize();
             LoggerInstance.Msg($"MultiRoom initialized. Link file: {DoorLinkManager.LinkPath}");
         }
 
-
+        /// <summary>
+        /// MelonLoader forwards Unity's OnGUI event here. LinkMenu keeps all drawing
+        /// state internally, so this hook remains intentionally small.
+        /// </summary>
         public override void OnGUI()
         {
             LinkMenu.Draw();
         }
 
+        /// <summary>
+        /// Changes BOXROOM's active save slot and reloads its main scene.
+        /// Pending cross-scene state must be stored outside scene objects because
+        /// Unity destroys those objects during the reload.
+        /// </summary>
         internal static void LoadSlot(int slot)
         {
             try
@@ -46,7 +60,7 @@ namespace BoxroomMultiRoom
 
                 MelonLogger.Msg($"[MultiRoom] Loading Slot_{slot}...");
 
-                // SetSlot already saves the previous active slot when Main is active.
+                // SetSlot saves the room being left before changing slots.
                 SaveManager.Instance.SetSlot(slot);
                 SceneLoader.LoadMainScene();
             }
@@ -57,6 +71,10 @@ namespace BoxroomMultiRoom
             }
         }
 
+        /// <summary>
+        /// Waits for BOXROOM to finish constructing the new room before moving the
+        /// player. Checking IsSpawningRoom avoids racing the game's own spawn logic.
+        /// </summary>
         private static IEnumerator TeleportAfterRoomLoads()
         {
             const float timeoutSeconds = 30f;
@@ -84,6 +102,7 @@ namespace BoxroomMultiRoom
                     CharacterController controller =
                         player.GetComponent<CharacterController>();
 
+                    // CharacterController rejects direct transform movement while enabled.
                     if (controller != null)
                         controller.enabled = false;
 
