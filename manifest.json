@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "boxroom-multiroom",
+  "name": "Boxroom MultiRoom",
+  "author": "MidgetBrony",
+  "description": "Connect doors between BOXROOM save slots and explore multiple rooms as one space.",
+  "repository": "https://github.com/MidgetBrony/BoxroomMultiRoom",
+  "requirements": { "melonLoader": "0.7.0" },
+  "dependencies": [
+    {
+      "manifest": "https://raw.githubusercontent.com/MidgetBrony/ModsPanel/refs/heads/master/manifest.json",
+      "minimumVersion": "2.2.1",
+      "required": true
+    }
+  ],
+  "release": {
+    "provider": "github",
+    "asset": "BoxroomMultiRoom*.zip",
+    "destination": "Mods"
+  }
+}
