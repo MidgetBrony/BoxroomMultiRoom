@@ -2,7 +2,7 @@
 
 Connect doors between separate BOXROOM save slots and turn multiple rooms into one larger, explorable space.
 
-BoxroomMultiRoom is a MelonLoader mod for **BOXROOM**. A linked door loads its destination room, places you beside the matching door, and turns you to face into the room. The linking menu uses BOXROOM's visual style so it feels at home beside the game's existing interface.
+BoxroomMultiRoom is a MelonLoader mod for **BOXROOM**. A linked door loads its destination room, places you beside the matching door, and turns you to face into the room. The linking menu uses ModsPanel's shared BOXROOM UI framework for native assets, responsive layout, focus handling, and feedback.
 
 ## Features
 
@@ -18,19 +18,21 @@ BoxroomMultiRoom is a MelonLoader mod for **BOXROOM**. A linked door loads its d
 
 - BOXROOM for Windows
 - MelonLoader installed for BOXROOM
+- ModsPanel 2.0.0 or newer
 - `BoxroomMultiRoom.dll`
 
 ## Installation
 
 1. Install MelonLoader for BOXROOM if it is not already installed.
 2. Close the game.
-3. Copy `BoxroomMultiRoom.dll` into BOXROOM's `Mods` folder.
+3. Copy `ModsPanel.dll` and `BoxroomMultiRoom.dll` into BOXROOM's `Mods` folder.
 
    A typical installation looks like:
 
    ```text
    BOXROOM/
    ├── Mods/
+   │   ├── ModsPanel.dll
    │   └── BoxroomMultiRoom.dll
    └── BOXROOM.exe
    ```
@@ -125,8 +127,9 @@ MultiRoom waits up to 30 seconds for BOXROOM's main room scene and player contro
 The project targets `.NET Standard 2.1` and references the managed assemblies from a local BOXROOM installation.
 
 1. Clone or download the source.
-2. Open `Directory.Build.props` and set `GamePath` to your BOXROOM installation directory.
-3. Build `BoxroomMultiRoom.csproj`.
+2. Install or build `ModsPanel.dll` into BOXROOM's `Mods` directory.
+3. Open `Directory.Build.props` and set `GamePath` to your BOXROOM installation directory.
+4. Build `BoxroomMultiRoom.csproj`.
 
    ```powershell
    dotnet build BoxroomMultiRoom.csproj -c Debug

@@ -5,14 +5,14 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-[assembly: MelonInfo(typeof(BoxroomMultiRoom.Core), "Boxroom MultiRoom", "1.1.0", "MidgetBrony")]
+[assembly: MelonInfo(typeof(BoxroomMultiRoom.Core), "Boxroom MultiRoom", "1.2.0", "MidgetBrony")]
 [assembly: MelonGame(null, "BOXROOM")]
 
 namespace BoxroomMultiRoom
 {
     /// <summary>
-    /// MelonLoader entry point. It owns the mod lifecycle, draws the IMGUI overlay,
-    /// and performs save-slot transitions requested by linked doors.
+    /// MelonLoader entry point. It owns the mod lifecycle and performs save-slot
+    /// transitions requested by linked doors.
     /// </summary>
     public class Core : MelonMod
     {
@@ -26,15 +26,6 @@ namespace BoxroomMultiRoom
             Instance = this;
             DoorLinkManager.Initialize();
             LoggerInstance.Msg($"MultiRoom initialized. Link file: {DoorLinkManager.LinkPath}");
-        }
-
-        /// <summary>
-        /// MelonLoader forwards Unity's OnGUI event here. LinkMenu keeps all drawing
-        /// state internally, so this hook remains intentionally small.
-        /// </summary>
-        public override void OnGUI()
-        {
-            LinkMenu.Draw();
         }
 
         /// <summary>
